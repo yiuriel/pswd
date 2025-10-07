@@ -1,3 +1,5 @@
+import { secureClear } from "./secureStorage";
+
 export const API_BASE_URL = "http://localhost:8080/api";
 
 interface RegisterPayload {
@@ -161,6 +163,22 @@ export async function deleteVaultEntry(entryId: string) {
     method: "DELETE",
     headers: getAuthHeaders(),
     credentials: "include", // Send cookies
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error || "Failed to delete vault entry");
+  }
+
+  return response.ok;
+}
+
+export async function resetDb() {
+  await secureClear();
+
+  const response = await fetch(`${API_BASE_URL}/__$RESET$`, {
+    method: "POST",
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {

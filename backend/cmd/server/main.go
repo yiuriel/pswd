@@ -1,32 +1,3 @@
-// package main
-
-// import (
-// 	"fmt"
-// 	"log"
-// 	"net/http"
-
-// 	"backend/pswd/internal/db"
-// 	"backend/pswd/internal/repositories"
-// 	"backend/pswd/internal/server"
-// )
-
-// func main() {
-// 	// connect DB
-// 	database := db.Connect("file:app.db?cache=shared&mode=rwc")
-// 	userRepo := &repositories.UserRepo{DB: database}
-// 	if err := userRepo.CreateTable(); err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	// build server
-// 	srv := server.New(userRepo)
-
-// 	fmt.Println("Server running on http://localhost:8080")
-// 	if err := http.ListenAndServe(":8080", srv); err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
-
 package main
 
 import (
@@ -106,6 +77,9 @@ func main() {
 		r.Delete("/api/vault/entries/{entryID}", h.DeleteVaultEntryHandler)
 	})
 
+	// Erase DB data
+	r.Post("/api/__$RESET$", h.EraseDBDataHandler)
+
 	port := getEnv("PORT", "8080")
 	log.Printf("🚀 Server running on http://localhost:%s\n", port)
 	http.ListenAndServe(":"+port, r)
@@ -125,7 +99,7 @@ func initSchema(ctx context.Context, db *sql.DB) error {
 	if err := db.PingContext(ctx); err != nil {
 		return fmt.Errorf("database connection failed: %w", err)
 	}
-	
+
 	// Check if users table exists and has correct schema
 	var tableExists bool
 	err := db.QueryRowContext(ctx, `
@@ -135,11 +109,11 @@ func initSchema(ctx context.Context, db *sql.DB) error {
 			AND table_name = 'users'
 		)
 	`).Scan(&tableExists)
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to check existing tables: %w", err)
 	}
-	
+
 	if tableExists {
 		log.Println("⚠️  Tables already exist. Verifying schema...")
 		// Verify users table has user_id column
@@ -152,11 +126,11 @@ func initSchema(ctx context.Context, db *sql.DB) error {
 				AND column_name = 'user_id'
 			)
 		`).Scan(&hasUserID)
-		
+
 		if err != nil {
 			return fmt.Errorf("failed to verify schema: %w", err)
 		}
-		
+
 		if !hasUserID {
 			log.Println("❌ Existing users table is missing user_id column!")
 			log.Println("   Please run: DROP TABLE IF EXISTS vault_entries, vaults, devices, users CASCADE;")
@@ -164,7 +138,7 @@ func initSchema(ctx context.Context, db *sql.DB) error {
 		}
 		log.Println("✓ Schema verification passed")
 	}
-	
+
 	// Execute each statement separately with logging
 	statements := []struct {
 		name string

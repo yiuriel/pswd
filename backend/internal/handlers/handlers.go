@@ -173,7 +173,7 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// Clear the auth cookie
 	auth.ClearAuthCookie(w)
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"message": "logged out successfully"})
 }
@@ -357,6 +357,22 @@ func (h *Handler) GetUserInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
+}
+
+// ResetDBHandler resets the database
+func (h *Handler) EraseDBDataHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := h.DB.Exec(`
+		TRUNCATE TABLE users CASCADE;
+		TRUNCATE TABLE devices CASCADE;
+		TRUNCATE TABLE vaults CASCADE;
+		TRUNCATE TABLE vault_entries CASCADE;
+	`)
+	if err != nil {
+		http.Error(w, "failed to erase database data", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // Context helpers
