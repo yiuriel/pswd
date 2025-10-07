@@ -1,7 +1,3 @@
 package models
 
-type User struct {
-	ID    int    `db:"id"`
-	Name  string `db:"name"`
-	Email string `db:"email"`
-}
+// This file is deprecated - all models are now in models.go

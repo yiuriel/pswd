@@ -3,13 +3,11 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route } from "react-router";
 import { Home } from "./views/Home.tsx";
 import { Routes } from "react-router";
-import { AuthLayout } from "./components/auth/AuthLayout.tsx";
-import { AuthProvider } from "./contexts/AuthContext.tsx";
 import { RootLayout } from "./components/layout/RootLayout.tsx";
-import { Login } from "./components/auth/Login.tsx";
-import { Register } from "./components/auth/Register.tsx";
-import { Vault } from "./views/Vault.tsx";
-import { ProtectedRoute } from "./components/auth/ProtectedRoute.tsx";
+import { LoginUpdated } from "./components/auth/LoginUpdated.tsx";
+import { RegisterWithSteps } from "./components/auth/RegisterWithSteps.tsx";
+import { VaultManager } from "./views/VaultManager.tsx";
+import { AuthProvider } from "./contexts/AuthContext.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -18,20 +16,11 @@ createRoot(document.getElementById("root")!).render(
         <Routes>
           <Route element={<RootLayout />}>
             <Route index element={<Home />} />
-            <Route
-              path="vault"
-              element={
-                <ProtectedRoute requireAuth checkRouteAccess>
-                  <Vault />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="vault" element={<VaultManager />} />
           </Route>
 
-          <Route element={<AuthLayout />}>
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
-          </Route>
+          <Route path="login" element={<LoginUpdated />} />
+          <Route path="register" element={<RegisterWithSteps />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

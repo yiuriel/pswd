@@ -1,0 +1,38 @@
+# Backend
+backend/vendor
+backend/*.log
+
+# Frontend
+frontend/node_modules
+frontend/dist
+frontend/.vite
+frontend/*.log
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# pgAdmin config (needed)
+!pgadmin-servers.json
+
+# Environment files
+.env
+.env.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
