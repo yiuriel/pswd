@@ -1,4 +1,4 @@
-import { secureClear } from "./secureStorage";
+import { secureClear } from "./SecureCrypto";
 
 export const API_BASE_URL = "http://localhost:8080/api";
 

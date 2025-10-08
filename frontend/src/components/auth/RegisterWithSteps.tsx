@@ -22,7 +22,7 @@ import {
   generateDeviceFingerprint,
   storeMasterKeys,
   initCrypto,
-} from "../../helpers/crypto";
+} from "../../helpers/SecureCrypto";
 import { registerUser } from "../../helpers/api";
 
 interface RegistrationStep {

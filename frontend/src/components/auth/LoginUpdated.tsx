@@ -10,7 +10,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { useNavigate, Link as RouterLink } from "react-router";
-import { generateDeviceFingerprint, getMasterKeys } from "../../helpers/crypto";
+import { generateDeviceFingerprint, getMasterKeys } from "../../helpers/SecureCrypto";
 import { loginUser } from "../../helpers/api";
 
 export const LoginUpdated: React.FC = () => {

@@ -39,7 +39,7 @@ import {
   decryptVaultEntry,
   generateSecurePassword,
   isMasterDevice,
-} from "../helpers/crypto";
+} from "../helpers/SecureCrypto";
 import {
   createVaultEntry,
   getVaultEntries,
@@ -68,6 +68,7 @@ export const VaultManager: React.FC = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingEntry, setEditingEntry] = useState<VaultEntryWithDecrypted | null>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
+  const [isMaster, setIsMaster] = useState<boolean | null>(null);
 
   // Form state
   const [formData, setFormData] = useState<DecryptedEntry>({
@@ -84,8 +85,14 @@ export const VaultManager: React.FC = () => {
   const [selectedEntry, setSelectedEntry] = useState<VaultEntryWithDecrypted | null>(null);
 
   useEffect(() => {
+    checkMasterDevice();
     loadEntries();
   }, []);
+
+  const checkMasterDevice = async () => {
+    const masterStatus = await isMasterDevice();
+    setIsMaster(masterStatus);
+  };
 
   const loadEntries = async () => {
     setIsLoading(true);
@@ -252,7 +259,15 @@ export const VaultManager: React.FC = () => {
     }
   };
 
-  if (!isMasterDevice()) {
+  if (isMaster === null) {
+    return (
+      <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!isMaster) {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="error">

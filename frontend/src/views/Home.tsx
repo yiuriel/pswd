@@ -1,18 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, Container, Paper, Card, CardContent } from '@mui/material';
 import { useNavigate } from 'react-router';
 import LockIcon from '@mui/icons-material/Lock';
 import SecurityIcon from '@mui/icons-material/Security';
 import DevicesIcon from '@mui/icons-material/Devices';
 import KeyIcon from '@mui/icons-material/Key';
-import { isMasterDevice } from '../helpers/crypto';
+import { isMasterDevice } from '../helpers/SecureCrypto';
 import { useAuth } from '../contexts/AuthContext';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isLoggedIn = !!user;
-  const isMaster = isMasterDevice();
+  const [isMaster, setIsMaster] = useState(false);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      checkMasterDevice();
+    }
+  }, [isLoggedIn]);
+
+  const checkMasterDevice = async () => {
+    const masterStatus = await isMasterDevice();
+    setIsMaster(masterStatus);
+  };
 
   return (
     <Container maxWidth="lg">
