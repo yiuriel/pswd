@@ -23,6 +23,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Container,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -261,23 +262,36 @@ export const VaultManager: React.FC = () => {
 
   if (isMaster === null) {
     return (
-      <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <CircularProgress />
-      </Box>
+      <Container maxWidth="lg">
+        <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+          <CircularProgress sx={{ color: '#6366f1' }} />
+        </Box>
+      </Container>
     );
   }
 
   if (!isMaster) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">
-          This device is not configured as a master device. Please use your master device to access the vault.
-        </Alert>
-      </Box>
+      <Container maxWidth="lg">
+        <Box sx={{ p: 3 }}>
+          <Alert 
+            severity="error"
+            sx={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: 'rgba(255, 255, 255, 0.9)',
+              borderRadius: '12px',
+            }}
+          >
+            This device is not configured as a master device. Please use your master device to access the vault.
+          </Alert>
+        </Box>
+      </Container>
     );
   }
 
   return (
+    <Container maxWidth="lg">
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Box>
@@ -567,5 +581,6 @@ export const VaultManager: React.FC = () => {
         message={snackbar.message}
       />
     </Box>
+    </Container>
   );
 };

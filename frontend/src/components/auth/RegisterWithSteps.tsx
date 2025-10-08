@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import {
   Box,
-  Button,
   TextField,
   Typography,
   Alert,
-  Paper,
   Link,
   CircularProgress,
   Stepper,
@@ -13,9 +11,18 @@ import {
   StepLabel,
   StepContent,
   Chip,
+  Container,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
 import { useNavigate, Link as RouterLink } from "react-router";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
+import LockIcon from '@mui/icons-material/Lock';
+import DevicesIcon from '@mui/icons-material/Devices';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import {
   generateMasterKeys,
   generateDeviceKeys,
@@ -24,6 +31,7 @@ import {
   initCrypto,
 } from "../../helpers/SecureCrypto";
 import { registerUser } from "../../helpers/api";
+import { FuturisticBackground, FuturisticButton, GlassContainer } from '../ui/FuturisticUI';
 
 interface RegistrationStep {
   label: string;
@@ -39,6 +47,8 @@ export const RegisterWithSteps: React.FC = () => {
   const [email, setEmail] = useState("kaku@kaku.com");
   const [password, setPassword] = useState("Kaku1991");
   const [confirmPassword, setConfirmPassword] = useState("Kaku1991");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [deviceName, setDeviceName] = useState(getDefaultDeviceName());
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -225,23 +235,24 @@ export const RegisterWithSteps: React.FC = () => {
 
   if (isRegistering || activeStep >= 0) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          bgcolor: "grey.50",
-          p: 2,
-        }}
-      >
-        <Paper elevation={3} sx={{ p: 4, width: "100%", maxWidth: 600 }}>
-          <Typography variant="h5" gutterBottom>
-            Setting Up Your Secure Vault
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Please wait while we securely configure your master device...
-          </Typography>
+      <FuturisticBackground>
+        <Container maxWidth="md">
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: "100vh",
+              py: 4,
+            }}
+          >
+            <GlassContainer sx={{ p: 5, width: "100%" }}>
+              <Typography variant="h4" gutterBottom sx={{ color: 'white', fontWeight: 700 }}>
+                Setting Up Your Secure Vault
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 4, color: 'rgba(255, 255, 255, 0.7)' }}>
+                Please wait while we securely configure your master device...
+              </Typography>
 
           <Stepper activeStep={activeStep} orientation="vertical">
             {steps.map((step) => (
@@ -290,136 +301,385 @@ export const RegisterWithSteps: React.FC = () => {
           </Stepper>
 
           {steps.some((s) => s.status === "error") && (
-            <Alert severity="error" sx={{ mt: 2 }}>
+            <Alert 
+              severity="error" 
+              sx={{ 
+                mt: 3,
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: 'rgba(255, 255, 255, 0.9)',
+                borderRadius: '12px',
+              }}
+            >
               Registration failed. Please try again.
-              <Button
+              <FuturisticButton
                 size="small"
                 onClick={() => window.location.reload()}
-                sx={{ ml: 2 }}
+                sx={{ ml: 2, py: 0.5, px: 2, fontSize: '0.875rem' }}
               >
                 Retry
-              </Button>
+              </FuturisticButton>
             </Alert>
           )}
-        </Paper>
-      </Box>
+        </GlassContainer>
+          </Box>
+        </Container>
+      </FuturisticBackground>
     );
   }
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        bgcolor: "grey.50",
-        p: 2,
-      }}
-    >
-      <Paper elevation={3} sx={{ p: 4, width: "100%", maxWidth: 450 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
-          Create Master Vault
-        </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          align="center"
-          sx={{ mb: 3 }}
+    <FuturisticBackground>
+      <Container maxWidth="sm">
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "100vh",
+            py: 4,
+          }}
         >
-          This device will become your master vault controller
-        </Typography>
+          <GlassContainer sx={{ p: 5, width: "100%" }}>
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <Box sx={{ 
+                display: 'inline-block',
+                p: 2,
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2))',
+                mb: 3,
+              }}>
+                <DevicesIcon sx={{ fontSize: 48, color: '#6366f1' }} />
+              </Box>
+              
+              <Typography variant="h2" component="h1" sx={{ 
+                fontSize: { xs: '2rem', md: '2.5rem' }, 
+                mb: 1,
+                fontWeight: 900,
+                background: 'linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                letterSpacing: '-0.02em',
+              }}>
+                CREATE MASTER VAULT
+              </Typography>
+              
+              <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                This device will become your master vault controller
+              </Typography>
+            </Box>
 
-        <Box component="form" onSubmit={handleRegister} noValidate>
-          <TextField
-            fullWidth
-            label="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            error={!!errors.username}
-            helperText={errors.username}
-            margin="normal"
-            required
-            autoFocus
-          />
+            <Box component="form" onSubmit={handleRegister} noValidate>
+              <TextField
+                fullWidth
+                label="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                error={!!errors.username}
+                helperText={errors.username}
+                margin="normal"
+                required
+                autoFocus
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonIcon sx={{ color: '#6366f1' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    background: 'rgba(30, 35, 60, 0.5)',
+                    borderRadius: '12px',
+                    '& fieldset': {
+                      borderColor: 'rgba(99, 102, 241, 0.3)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(99, 102, 241, 0.5)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#6366f1',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    '&.Mui-focused': {
+                      color: '#6366f1',
+                    }
+                  },
+                  '& .MuiFormHelperText-root': {
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    '&.Mui-error': {
+                      color: '#ef4444',
+                    }
+                  },
+                }}
+              />
 
-          <TextField
-            fullWidth
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            error={!!errors.email}
-            helperText={errors.email}
-            margin="normal"
-            required
-          />
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                error={!!errors.email}
+                helperText={errors.email}
+                margin="normal"
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon sx={{ color: '#6366f1' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    background: 'rgba(30, 35, 60, 0.5)',
+                    borderRadius: '12px',
+                    '& fieldset': {
+                      borderColor: 'rgba(99, 102, 241, 0.3)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(99, 102, 241, 0.5)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#6366f1',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    '&.Mui-focused': {
+                      color: '#6366f1',
+                    }
+                  },
+                  '& .MuiFormHelperText-root': {
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    '&.Mui-error': {
+                      color: '#ef4444',
+                    }
+                  },
+                }}
+              />
 
-          <TextField
-            fullWidth
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={!!errors.password}
-            helperText={errors.password}
-            margin="normal"
-            required
-          />
+              <TextField
+                fullWidth
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={!!errors.password}
+                helperText={errors.password}
+                margin="normal"
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon sx={{ color: '#6366f1', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    background: 'rgba(30, 35, 60, 0.5)',
+                    borderRadius: '12px',
+                    '& fieldset': {
+                      borderColor: 'rgba(99, 102, 241, 0.3)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(99, 102, 241, 0.5)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#6366f1',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    '&.Mui-focused': {
+                      color: '#6366f1',
+                    }
+                  },
+                  '& .MuiFormHelperText-root': {
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    '&.Mui-error': {
+                      color: '#ef4444',
+                    }
+                  },
+                }}
+              />
 
-          <TextField
-            fullWidth
-            label="Confirm Password"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            error={!!errors.confirmPassword}
-            helperText={errors.confirmPassword}
-            margin="normal"
-            required
-          />
+              <TextField
+                fullWidth
+                label="Confirm Password"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                error={!!errors.confirmPassword}
+                helperText={errors.confirmPassword}
+                margin="normal"
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon sx={{ color: '#6366f1', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        edge="end"
+                        sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                      >
+                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    background: 'rgba(30, 35, 60, 0.5)',
+                    borderRadius: '12px',
+                    '& fieldset': {
+                      borderColor: 'rgba(99, 102, 241, 0.3)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(99, 102, 241, 0.5)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#6366f1',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    '&.Mui-focused': {
+                      color: '#6366f1',
+                    }
+                  },
+                  '& .MuiFormHelperText-root': {
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    '&.Mui-error': {
+                      color: '#ef4444',
+                    }
+                  },
+                }}
+              />
 
-          <TextField
-            fullWidth
-            label="Device Name"
-            value={deviceName}
-            onChange={(e) => setDeviceName(e.target.value)}
-            error={!!errors.deviceName}
-            helperText={
-              errors.deviceName || "Give this device a recognizable name"
-            }
-            margin="normal"
-            required
-          />
+              <TextField
+                fullWidth
+                label="Device Name"
+                value={deviceName}
+                onChange={(e) => setDeviceName(e.target.value)}
+                error={!!errors.deviceName}
+                helperText={
+                  errors.deviceName || "Give this device a recognizable name"
+                }
+                margin="normal"
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <DevicesIcon sx={{ color: '#6366f1' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    background: 'rgba(30, 35, 60, 0.5)',
+                    borderRadius: '12px',
+                    '& fieldset': {
+                      borderColor: 'rgba(99, 102, 241, 0.3)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(99, 102, 241, 0.5)',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#6366f1',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    '&.Mui-focused': {
+                      color: '#6366f1',
+                    }
+                  },
+                  '& .MuiFormHelperText-root': {
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    '&.Mui-error': {
+                      color: '#ef4444',
+                    }
+                  },
+                }}
+              />
 
-          <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
-            <Typography variant="body2">
-              <strong>Master Device:</strong> This device will store your
-              encryption keys and act as the primary vault controller. Keep it
-              secure!
-            </Typography>
-          </Alert>
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  mt: 3, 
+                  mb: 3,
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  borderRadius: '12px',
+                }}
+              >
+                <Typography variant="body2">
+                  <strong>Master Device:</strong> This device will store your
+                  encryption keys and act as the primary vault controller. Keep it
+                  secure!
+                </Typography>
+              </Alert>
 
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            size="large"
-            sx={{ mt: 2, mb: 2, py: 1.5 }}
-          >
-            Create Vault
-          </Button>
+              <FuturisticButton
+                type="submit"
+                fullWidth
+                sx={{ mb: 3 }}
+              >
+                Create Vault
+              </FuturisticButton>
 
-          <Box sx={{ textAlign: "center" }}>
-            <Typography variant="body2">
-              Already have a vault?{" "}
-              <Link component={RouterLink} to="/login" underline="hover">
-                Sign in here
-              </Link>
-            </Typography>
-          </Box>
+              <Box sx={{ textAlign: "center" }}>
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  Already have a vault?{" "}
+                  <Link 
+                    component={RouterLink} 
+                    to="/login"
+                    sx={{ 
+                      color: '#a855f7',
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        color: '#ec4899',
+                        textDecoration: 'underline',
+                      }
+                    }}
+                  >
+                    Sign in here
+                  </Link>
+                </Typography>
+              </Box>
+            </Box>
+          </GlassContainer>
         </Box>
-      </Paper>
-    </Box>
+      </Container>
+    </FuturisticBackground>
   );
 };
