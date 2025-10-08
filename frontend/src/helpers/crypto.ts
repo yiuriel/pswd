@@ -42,26 +42,48 @@ export async function generateDeviceFingerprint(): Promise<string> {
   return fingerprint;
 }
 
-/**
- * Generate master device keys (encryption and signing keypairs)
- */
-export async function generateMasterKeys() {
+export async function generateMasterKeys(password: string) {
   await initCrypto();
 
-  // Generate encryption keypair (X25519)
-  const encKeyPair = sodium.crypto_kx_keypair();
+  // Generar salt único (para derivar la master key)
+  const salt = sodium.randombytes_buf(sodium.crypto_pwhash_SALTBYTES);
 
-  // Generate signing keypair (Ed25519)
+  // Derivar la master key a partir del password y el salt
+  const masterKey = sodium.crypto_pwhash(
+    sodium.crypto_secretbox_KEYBYTES,
+    password,
+    salt,
+    sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE,
+    sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE,
+    sodium.crypto_pwhash_ALG_DEFAULT
+  );
+
+  // Generar keypairs
+  const encKeyPair = sodium.crypto_kx_keypair();
   const signKeyPair = sodium.crypto_sign_keypair();
 
+  // Opcional: cifrar las claves privadas con la masterKey antes de guardar
+  const encPrivKeyEncrypted = sodium.crypto_secretbox_easy(
+    encKeyPair.privateKey,
+    sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES),
+    masterKey
+  );
+
+  const signPrivKeyEncrypted = sodium.crypto_secretbox_easy(
+    signKeyPair.privateKey,
+    sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES),
+    masterKey
+  );
+
   return {
+    salt, // guardar para poder derivar masterKey después
     encKeyPair: {
       publicKey: sodium.to_base64(encKeyPair.publicKey),
-      privateKey: sodium.to_base64(encKeyPair.privateKey),
+      privateKey: sodium.to_base64(encPrivKeyEncrypted), // cifrada
     },
     signKeyPair: {
       publicKey: sodium.to_base64(signKeyPair.publicKey),
-      privateKey: sodium.to_base64(signKeyPair.privateKey),
+      privateKey: sodium.to_base64(signPrivKeyEncrypted), // cifrada
     },
   };
 }

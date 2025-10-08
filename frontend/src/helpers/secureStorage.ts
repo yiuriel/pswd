@@ -24,6 +24,22 @@ const STORE_NAME = "keys";
 // In-memory encryption key (cleared on page unload)
 let sessionKey: Uint8Array | null = null;
 
+export async function deriveKeyFromPassword(password: string, salt: Uint8Array): Promise<Uint8Array> {
+  await sodium.ready;
+
+  // Derivar una clave de tamaño crypto_secretbox_KEYBYTES
+  const key = sodium.crypto_pwhash(
+    sodium.crypto_secretbox_KEYBYTES,  // tamaño de la clave para encrypt/decrypt
+    password,
+    salt,
+    sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE,
+    sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE,
+    sodium.crypto_pwhash_ALG_DEFAULT
+  );
+
+  return key;
+}
+
 /**
  * Initialize the secure storage system
  */

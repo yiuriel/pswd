@@ -35,10 +35,10 @@ interface RegistrationStep {
 export const RegisterWithSteps: React.FC = () => {
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [username, setUsername] = useState("kaku");
+  const [email, setEmail] = useState("kaku@kaku.com");
+  const [password, setPassword] = useState("Kaku1991");
+  const [confirmPassword, setConfirmPassword] = useState("Kaku1991");
   const [deviceName, setDeviceName] = useState(getDefaultDeviceName());
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -148,7 +148,7 @@ export const RegisterWithSteps: React.FC = () => {
 
       // Step 2: Generate Master Keys
       updateStepStatus(1, "in_progress");
-      const masterKeys = await generateMasterKeys();
+      const masterKeys = await generateMasterKeys(password);
       await new Promise((resolve) => setTimeout(resolve, 500));
       updateStepStatus(
         1,
