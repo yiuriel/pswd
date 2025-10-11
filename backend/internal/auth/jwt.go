@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -17,7 +19,18 @@ import (
 // NOTE: In a production app, use a proper JWT library like github.com/golang-jwt/jwt
 // This is a minimal implementation for demonstration purposes
 
-var jwtSecret = []byte("your-secret-key-change-this-in-production") // TODO: Move to environment variable
+var jwtSecret []byte
+
+func init() {
+	secretStr := os.Getenv("JWT_SECRET")
+	if secretStr == "" {
+		log.Fatal("JWT_SECRET environment variable is required")
+	}
+	if len(secretStr) < 32 {
+		log.Fatal("JWT_SECRET must be at least 32 characters for security")
+	}
+	jwtSecret = []byte(secretStr)
+}
 
 type Claims struct {
 	UserID    string `json:"user_id"`
@@ -123,9 +136,9 @@ func SetAuthCookie(w http.ResponseWriter, token string, maxAge int) {
 		Value:    token,
 		Path:     "/",
 		MaxAge:   maxAge,
-		HttpOnly: true,                    // Prevents JavaScript access (XSS protection)
-		Secure:   false,                   // Set to true in production with HTTPS
-		SameSite: http.SameSiteLaxMode,    // CSRF protection
+		HttpOnly: true,                         // Prevents JavaScript access (XSS protection)
+		Secure:   os.Getenv("ENV") == "production", // Only send over HTTPS in production
+		SameSite: http.SameSiteStrictMode,      // Strict CSRF protection
 	})
 }
 
@@ -137,8 +150,8 @@ func ClearAuthCookie(w http.ResponseWriter) {
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   os.Getenv("ENV") == "production",
+		SameSite: http.SameSiteStrictMode,
 	})
 }
 
