@@ -254,7 +254,18 @@ export const RegisterWithSteps: React.FC = () => {
                 Please wait while we securely configure your master device...
               </Typography>
 
-          <Stepper activeStep={activeStep} orientation="vertical">
+          <Stepper 
+            activeStep={activeStep} 
+            orientation="vertical"
+            sx={{
+              '& .MuiStepLabel-label.Mui-active': {
+                color: 'white',
+              },
+              '& .MuiStepLabel-label.Mui-completed': {
+                color: 'rgba(255, 255, 255, 0.7)',
+              },
+            }}
+          >
             {steps.map((step) => (
               <Step key={step.label}>
                 <StepLabel
@@ -266,8 +277,13 @@ export const RegisterWithSteps: React.FC = () => {
                     ) : null
                   }
                   error={step.status === "error"}
+                  sx={{
+                    '& .MuiStepLabel-label': {
+                      color: step.status === "in_progress" || step.status === "completed" ? 'white' : 'rgba(255, 255, 255, 0.5)',
+                    }
+                  }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: 'white' }}>
                     {step.label}
                     {step.status === "completed" && (
                       <CheckCircleIcon color="success" fontSize="small" />

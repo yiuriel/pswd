@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // NOTE: In a production app, use a proper JWT library like github.com/golang-jwt/jwt
@@ -140,15 +142,31 @@ func ClearAuthCookie(w http.ResponseWriter) {
 	})
 }
 
-// HashPassword creates a simple hash of the password
-// NOTE: In production, use bcrypt or argon2
-func HashPassword(password string) string {
-	h := sha256.New()
-	h.Write([]byte(password))
-	return fmt.Sprintf("%x", h.Sum(nil))
+// HashPassword hashes a password using bcrypt with a cost of 12.
+// Returns the bcrypt hash string or an error if hashing fails.
+// Cost of 12 provides a good balance between security and performance.
+func HashPassword(password string) (string, error) {
+	if password == "" {
+		return "", errors.New("password cannot be empty")
+	}
+
+	// Use bcrypt with cost factor 12 (recommended for production)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return "", fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	return string(hash), nil
 }
 
-// VerifyPassword checks if a password matches the hash
+// VerifyPassword checks if a password matches the bcrypt hash.
+// Returns true if the password is correct, false otherwise.
+// Uses constant-time comparison to prevent timing attacks.
 func VerifyPassword(password, hash string) bool {
-	return HashPassword(password) == hash
+	if password == "" || hash == "" {
+		return false
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }
