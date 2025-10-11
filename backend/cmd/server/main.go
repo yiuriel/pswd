@@ -2,15 +2,17 @@ package main
 
 import (
 	"backend/pswd/internal/handlers"
+	"backend/pswd/internal/middleware"
 	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	_ "github.com/lib/pq"
 )
@@ -44,11 +46,19 @@ func main() {
 	// Initialize handlers
 	h := &handlers.Handler{DB: db}
 
+	// Initialize rate limiter
+	rps, burst := middleware.GetRateLimitConfig()
+	rateLimiter := middleware.NewIPRateLimiter(rps, burst)
+	rateLimiter.CleanupOldIPs(30 * time.Minute)
+
+	env := getEnv("ENV", "development")
+	log.Printf("🔒 Rate limiting: %v req/s, burst: %d (ENV: %s)\n", rps, burst, env)
+
 	r := chi.NewRouter()
 
-	// Middleware
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
+	// Global Middleware
+	r.Use(chiMiddleware.Logger)
+	r.Use(chiMiddleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:3000"}, // Frontend dev servers
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -58,10 +68,13 @@ func main() {
 		MaxAge:           300, // Cache preflight for 5 minutes
 	}))
 
-	// Public routes
-	r.Post("/api/auth/register", h.RegisterHandler)
-	r.Post("/api/auth/login", h.LoginHandler)
-	r.Post("/api/auth/logout", h.LogoutHandler)
+	// Public routes with rate limiting
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RateLimitMiddleware(rateLimiter))
+		r.Post("/api/auth/register", h.RegisterHandler)
+		r.Post("/api/auth/login", h.LoginHandler)
+		r.Post("/api/auth/logout", h.LogoutHandler)
+	})
 
 	// Protected routes
 	r.Group(func(r chi.Router) {

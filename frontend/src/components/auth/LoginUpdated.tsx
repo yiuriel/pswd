@@ -15,7 +15,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import PersonIcon from '@mui/icons-material/Person';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { generateDeviceFingerprint, getMasterKeys } from "../../helpers/SecureCrypto";
+import { generateDeviceFingerprint, getMasterKeys, unlockVault } from "../../helpers/SecureCrypto";
 import { loginUser } from "../../helpers/api";
 import { FuturisticBackground, FuturisticButton, GlassContainer } from '../ui/FuturisticUI';
 
@@ -58,6 +58,14 @@ export const LoginUpdated: React.FC = () => {
         setError(
           "Master device keys not found on this device. You may need to set up a new master device.",
         );
+        return;
+      }
+
+      // Unlock the vault with the password
+      try {
+        await unlockVault(password);
+      } catch (unlockError) {
+        setError("Failed to unlock vault. Please check your password.");
         return;
       }
 

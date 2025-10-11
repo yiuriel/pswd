@@ -40,6 +40,8 @@ import {
   decryptVaultEntry,
   generateSecurePassword,
   isMasterDevice,
+  isVaultUnlocked,
+  unlockVault,
 } from "../helpers/SecureCrypto";
 import {
   createVaultEntry,
@@ -70,6 +72,10 @@ export const VaultManager: React.FC = () => {
   const [editingEntry, setEditingEntry] = useState<VaultEntryWithDecrypted | null>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
   const [isMaster, setIsMaster] = useState<boolean | null>(null);
+  const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
+  const [unlockPassword, setUnlockPassword] = useState("");
+  const [unlockError, setUnlockError] = useState("");
+  const [isUnlocking, setIsUnlocking] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<DecryptedEntry>({
@@ -87,12 +93,41 @@ export const VaultManager: React.FC = () => {
 
   useEffect(() => {
     checkMasterDevice();
+    checkVaultLock();
     loadEntries();
   }, []);
+
+  const checkVaultLock = () => {
+    const unlocked = isVaultUnlocked();
+    if (!unlocked) {
+      setUnlockDialogOpen(true);
+    }
+  };
 
   const checkMasterDevice = async () => {
     const masterStatus = await isMasterDevice();
     setIsMaster(masterStatus);
+  };
+
+  const handleUnlockVault = async () => {
+    if (!unlockPassword) {
+      setUnlockError("Please enter your password");
+      return;
+    }
+
+    setIsUnlocking(true);
+    setUnlockError("");
+
+    try {
+      await unlockVault(unlockPassword);
+      setUnlockDialogOpen(false);
+      setUnlockPassword("");
+      setSnackbar({ open: true, message: "Vault unlocked successfully" });
+    } catch (err) {
+      setUnlockError(err instanceof Error ? err.message : "Failed to unlock vault");
+    } finally {
+      setIsUnlocking(false);
+    }
   };
 
   const loadEntries = async () => {
@@ -140,6 +175,12 @@ export const VaultManager: React.FC = () => {
   };
 
   const handleOpenDialog = (entry?: VaultEntryWithDecrypted) => {
+    if (!isVaultUnlocked()) {
+      setSnackbar({ open: true, message: "Please unlock vault first" });
+      setUnlockDialogOpen(true);
+      return;
+    }
+
     if (entry) {
       setEditingEntry(entry);
       if (entry.decryptedData) {
@@ -572,6 +613,74 @@ export const VaultManager: React.FC = () => {
           Delete
         </MenuItem>
       </Menu>
+
+      {/* Unlock Vault Dialog */}
+      <Dialog 
+        open={unlockDialogOpen} 
+        onClose={() => {}} 
+        disableEscapeKeyDown
+        maxWidth="sm" 
+        fullWidth
+      >
+        <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
+          <LockIcon sx={{ fontSize: 48, color: '#6366f1', mb: 1 }} />
+          <Typography variant="h5" component="div">
+            Unlock Your Vault
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Alert 
+            severity="info" 
+            sx={{ 
+              mb: 3,
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+            }}
+          >
+            Enter your password to decrypt and access your vault entries
+          </Alert>
+
+          {unlockError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {unlockError}
+            </Alert>
+          )}
+
+          <TextField
+            fullWidth
+            type="password"
+            label="Master Password"
+            value={unlockPassword}
+            onChange={(e) => setUnlockPassword(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleUnlockVault();
+              }
+            }}
+            autoFocus
+            margin="normal"
+            disabled={isUnlocking}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <KeyIcon sx={{ color: '#6366f1' }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button
+            onClick={handleUnlockVault}
+            variant="contained"
+            fullWidth
+            disabled={isUnlocking || !unlockPassword}
+            startIcon={isUnlocking ? <CircularProgress size={20} /> : <LockIcon />}
+          >
+            {isUnlocking ? "Unlocking..." : "Unlock Vault"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar */}
       <Snackbar

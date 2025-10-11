@@ -206,6 +206,8 @@ class SecureStorage {
 class CryptoManager {
   private storage: SecureStorage;
   private initialized: boolean = false;
+  private vaultKey: Uint8Array | null = null;
+  private isVaultUnlocked: boolean = false;
 
   constructor() {
     this.storage = new SecureStorage();
@@ -371,6 +373,69 @@ class CryptoManager {
   }
 
   /**
+   * Check if vault is unlocked
+   */
+  isUnlocked(): boolean {
+    return this.isVaultUnlocked && this.vaultKey !== null;
+  }
+
+  /**
+   * Unlock the vault with password
+   * Decrypts the master private key and derives the vault encryption key
+   */
+  async unlockVault(password: string): Promise<void> {
+    await this.init();
+
+    const encPrivateKeyEncrypted = await this.storage.get("master_enc_sk");
+    const saltBase64 = await this.storage.get("salt");
+
+    if (!encPrivateKeyEncrypted || !saltBase64) {
+      throw new Error("Master keys not found. Please register first.");
+    }
+
+    // Derive master key from password
+    const salt = sodium.from_base64(saltBase64);
+    const masterKey = await this.deriveKeyFromPassword(password, salt);
+
+    // Decrypt the private key
+    const combined = sodium.from_base64(encPrivateKeyEncrypted);
+    const nonce = combined.slice(0, sodium.crypto_secretbox_NONCEBYTES);
+    const ciphertext = combined.slice(sodium.crypto_secretbox_NONCEBYTES);
+
+    try {
+      const privateKey = sodium.crypto_secretbox_open_easy(ciphertext, nonce, masterKey);
+      
+      // Derive vault encryption key from the decrypted private key
+      this.vaultKey = sodium.crypto_generichash(32, privateKey);
+      this.isVaultUnlocked = true;
+
+      // Zero out the decrypted private key (we only need the vault key)
+      sodium.memzero(privateKey);
+      sodium.memzero(masterKey);
+    } catch (error) {
+      throw new Error("Invalid password. Failed to unlock vault.");
+    }
+  }
+
+  /**
+   * Lock the vault (clear in-memory keys)
+   */
+  lockVault(): void {
+    if (this.vaultKey) {
+      sodium.memzero(this.vaultKey);
+      this.vaultKey = null;
+    }
+    this.isVaultUnlocked = false;
+  }
+
+  /**
+   * Store salt needed for vault unlock
+   */
+  async storeSalt(salt: string): Promise<void> {
+    await this.storage.set("salt", salt);
+  }
+
+  /**
    * Encrypt data using the master encryption key
    */
   async encryptData(
@@ -432,19 +497,14 @@ class CryptoManager {
   async encryptVaultEntry(data: any): Promise<string> {
     await this.init();
 
-    const keys = await this.getMasterKeys();
-    if (!keys.encPrivateKey) {
-      throw new Error("Master encryption key not found");
+    if (!this.isVaultUnlocked || !this.vaultKey) {
+      throw new Error("Vault is locked. Please unlock with your password first.");
     }
-
-    // Derive a symmetric key from the master key
-    const privateKeyBytes = sodium.from_base64(keys.encPrivateKey);
-    const key = sodium.crypto_generichash(32, privateKeyBytes);
 
     const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
     const message = sodium.from_string(JSON.stringify(data));
 
-    const ciphertext = sodium.crypto_secretbox_easy(message, nonce, key);
+    const ciphertext = sodium.crypto_secretbox_easy(message, nonce, this.vaultKey);
 
     // Combine nonce and ciphertext
     const combined = new Uint8Array(nonce.length + ciphertext.length);
@@ -460,19 +520,15 @@ class CryptoManager {
   async decryptVaultEntry(encryptedData: string): Promise<any> {
     await this.init();
 
-    const keys = await this.getMasterKeys();
-    if (!keys.encPrivateKey) {
-      throw new Error("Master encryption key not found");
+    if (!this.isVaultUnlocked || !this.vaultKey) {
+      throw new Error("Vault is locked. Please unlock with your password first.");
     }
-
-    const privateKeyBytes = sodium.from_base64(keys.encPrivateKey);
-    const key = sodium.crypto_generichash(32, privateKeyBytes);
 
     const combined = sodium.from_base64(encryptedData);
     const nonce = combined.slice(0, sodium.crypto_secretbox_NONCEBYTES);
     const ciphertext = combined.slice(sodium.crypto_secretbox_NONCEBYTES);
 
-    const decrypted = sodium.crypto_secretbox_open_easy(ciphertext, nonce, key);
+    const decrypted = sodium.crypto_secretbox_open_easy(ciphertext, nonce, this.vaultKey);
 
     return JSON.parse(sodium.to_string(decrypted));
   }
@@ -481,11 +537,13 @@ class CryptoManager {
    * Clear all stored keys (logout)
    */
   async clearStoredKeys(): Promise<void> {
+    this.lockVault();
     await this.storage.remove("master_enc_sk");
     await this.storage.remove("master_sign_sk");
     await this.storage.remove("device_sk");
     await this.storage.remove("is_master_device");
     await this.storage.remove("device_fingerprint");
+    await this.storage.remove("salt");
   }
 
   /**
@@ -526,6 +584,10 @@ export const encryptVaultEntry = (data: any) => cryptoManager.encryptVaultEntry(
 export const decryptVaultEntry = (encryptedData: string) => cryptoManager.decryptVaultEntry(encryptedData);
 export const clearStoredKeys = () => cryptoManager.clearStoredKeys();
 export const generateSecurePassword = (length?: number) => cryptoManager.generateSecurePassword(length);
+export const unlockVault = (password: string) => cryptoManager.unlockVault(password);
+export const lockVault = () => cryptoManager.lockVault();
+export const isVaultUnlocked = () => cryptoManager.isUnlocked();
+export const storeSalt = (salt: string) => cryptoManager.storeSalt(salt);
 
 // Expose secure storage clear function
 export const secureClear = () => cryptoManager['storage'].clear();

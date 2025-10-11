@@ -28,6 +28,8 @@ import {
   generateDeviceKeys,
   generateDeviceFingerprint,
   storeMasterKeys,
+  storeSalt,
+  unlockVault,
   initCrypto,
 } from "../../helpers/SecureCrypto";
 import { registerUser } from "../../helpers/api";
@@ -185,16 +187,19 @@ export const RegisterWithSteps: React.FC = () => {
 
       // Step 4: Secure Local Storage
       updateStepStatus(3, "in_progress");
-      storeMasterKeys(
+      await storeMasterKeys(
         masterKeys.encKeyPair.privateKey,
         masterKeys.signKeyPair.privateKey,
         deviceKeys.privateKey,
       );
+      await storeSalt(masterKeys.salt);
+      // Unlock the vault immediately after registration
+      await unlockVault(password);
       await new Promise((resolve) => setTimeout(resolve, 500));
       updateStepStatus(
         3,
         "completed",
-        "Private keys stored securely in browser",
+        "Private keys stored securely and vault unlocked",
       );
       setActiveStep(4);
 

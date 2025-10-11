@@ -109,14 +109,20 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		req.Username,
 	).Scan(&userID, &username, &passwordHash)
 
+	// Always verify password hash even if user not found (prevents timing attacks)
+	// Use a dummy hash if user doesn't exist so bcrypt still runs
 	if err != nil {
-		http.Error(w, "invalid credentials", http.StatusUnauthorized)
-		return
+		// Dummy bcrypt hash - ensures timing is consistent whether user exists or not
+		passwordHash = "$2a$12$DummyHashToPreventTimingAttacksForNonExistentUsers1234567"
 	}
 
 	// Verify password
-	if !auth.VerifyPassword(req.Password, passwordHash) {
-		http.Error(w, "invalid password", http.StatusUnauthorized)
+	passwordValid := auth.VerifyPassword(req.Password, passwordHash)
+
+	// Check both conditions after timing-sensitive operations complete
+	if err != nil || !passwordValid {
+		// Always return the same error message to prevent username enumeration
+		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
